@@ -1,0 +1,27 @@
+0 verbose cli /opt/homebrew/Cellar/node/25.7.0/bin/node /opt/homebrew/lib/node_modules/npm/bin/npm-cli.js
+1 info using npm@11.10.1
+2 info using node@v25.7.0
+3 silly config load:file:/opt/homebrew/lib/node_modules/npm/npmrc
+4 silly config load:file:/Users/paragnakum/Downloads/Primejar setup/.npmrc
+5 silly config load:file:/Users/paragnakum/.npmrc
+6 silly config load:file:/opt/homebrew/etc/npmrc
+7 verbose title npm exec firebase-tools login --no-localhost
+8 verbose argv "exec" "--" "firebase-tools" "login" "--no-localhost"
+9 verbose logfile logs-max:10 dir:/Users/paragnakum/Downloads/Primejar setup/.firebase_npm_cache/_logs/2026-04-05T17_18_20_827Z-
+10 verbose logfile /Users/paragnakum/Downloads/Primejar setup/.firebase_npm_cache/_logs/2026-04-05T17_18_20_827Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:2348810240 maxSize:587202560 maxEntrySize:293601280
+13 http fetch GET 200 https://registry.npmjs.org/firebase-tools 1304ms (cache miss)
+14 silly packumentCache heap:2348810240 maxSize:587202560 maxEntrySize:293601280
+15 http fetch GET 200 https://registry.npmjs.org/npm 1438ms
+16 verbose cwd /Users/paragnakum/Downloads/Primejar setup
+17 verbose os Darwin 25.3.0
+18 verbose node v25.7.0
+19 verbose npm  v11.10.1
+20 notice
+20 notice New [33mminor[39m version of npm available! [33m11.10.1[39m -> [34m11.12.1[39m
+20 notice Changelog: [34mhttps://github.com/npm/cli/releases/tag/v11.12.1[39m
+20 notice To update run: [4mnpm install -g npm@11.12.1[24m
+20 notice  { force: true, Symbol(proc-log.meta): true }
+21 verbose exit 2
+22 verbose code 2
