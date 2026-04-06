@@ -10,19 +10,44 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Primary orange brand color
-        orange: {
-          50:  '#fff7ed',
-          100: '#ffedd5',
-          200: '#fed7aa',
-          300: '#fdba74',
-          400: '#fb923c',
-          500: '#f97316',
-          600: '#ea6c0a',
-          700: '#c2510a',
-          800: '#9a3e10',
-          900: '#7c3410',
-          950: '#431709',
+        // Primary blue brand color
+        blue: {
+          50:  '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#3b82f6',
+          600: '#2563eb',
+          700: '#1d4ed8',
+          800: '#1e40af',
+          900: '#1e3a8a',
+          950: '#172554',
+        },
+        // Prime alias (used in legacy pages)
+        prime: {
+          50:  '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#3b82f6',
+          600: '#2563eb',
+          700: '#1d4ed8',
+          800: '#1e40af',
+          900: '#1e3a8a',
+          950: '#172554',
+        },
+        // Accent amber
+        accent: {
+          50:  '#fffbeb',
+          100: '#fef3c7',
+          200: '#fde68a',
+          300: '#fcd34d',
+          400: '#fbbf24',
+          500: '#f59e0b',
+          600: '#d97706',
+          700: '#b45309',
         },
         // Neutral grays
         gray: {
@@ -71,7 +96,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
+        display: ['Poppins', 'Inter', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
         'xl':  '12px',
@@ -85,10 +110,12 @@ const config: Config = {
         'card': '0 1px 3px 0 rgba(0,0,0,0.05), 0 1px 2px -1px rgba(0,0,0,0.04)',
         'card-hover': '0 12px 32px -8px rgba(0,0,0,0.10), 0 4px 8px -2px rgba(0,0,0,0.04)',
         'card-hover-dark': '0 12px 32px -8px rgba(0,0,0,0.50), 0 4px 8px -2px rgba(0,0,0,0.3)',
-        'orange': '0 4px 14px 0 rgba(249,115,22,0.30)',
-        'orange-lg': '0 8px 28px 0 rgba(249,115,22,0.38)',
+        'blue': '0 4px 14px 0 rgba(37,99,235,0.30)',
+        'blue-lg': '0 8px 28px 0 rgba(37,99,235,0.38)',
+        'orange': '0 4px 14px 0 rgba(37,99,235,0.30)',
+        'orange-lg': '0 8px 28px 0 rgba(37,99,235,0.38)',
         'nav': '0 1px 0 0 rgba(0,0,0,0.06)',
-        'focus': '0 0 0 3px rgba(249,115,22,0.15)',
+        'focus': '0 0 0 3px rgba(37,99,235,0.15)',
         'shot': '0 4px 20px rgba(0,0,0,0.08)',
         'shot-hover': '0 16px 40px rgba(0,0,0,0.14)',
       },
@@ -143,8 +170,10 @@ const config: Config = {
       },
       // Background patterns
       backgroundImage: {
-        'gradient-orange': 'linear-gradient(135deg, #F97316 0%, #EA6C0A 100%)',
-        'gradient-orange-light': 'linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%)',
+        'gradient-blue': 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
+        'gradient-blue-light': 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)',
+        'gradient-orange': 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
+        'gradient-orange-light': 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)',
       },
     },
   },

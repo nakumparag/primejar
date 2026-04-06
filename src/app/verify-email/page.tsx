@@ -6,6 +6,7 @@ import { sendEmailVerification } from 'firebase/auth';
 import { useAuth } from '@/contexts/AuthContext';
 import { Mail, RefreshCw, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
 
 export default function VerifyEmailPage() {
   const { user, profile, loading: authLoading } = useAuth();
@@ -13,7 +14,6 @@ export default function VerifyEmailPage() {
   
   const [resendCooldown, setResendCooldown] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState({ type: '', text: '' });
 
   // Handle countdown timer for resend
   useEffect(() => {
@@ -38,17 +38,16 @@ export default function VerifyEmailPage() {
     if (!user || resendCooldown > 0) return;
     
     setLoading(true);
-    setMessage({ type: '', text: '' });
     
     try {
       await sendEmailVerification(user);
-      setMessage({ type: 'success', text: 'Verification email resent! Please check your inbox and spam folder.' });
+      toast.success('Verification email resent! Please check your inbox and spam folder.');
       setResendCooldown(60); // 60 seconds cooldown
     } catch (error: any) {
       if (error.code === 'auth/too-many-requests') {
-        setMessage({ type: 'error', text: 'Too many requests. Please wait a moment before trying again.' });
+        toast.error('Too many requests. Please wait a moment before trying again.');
       } else {
-        setMessage({ type: 'error', text: error.message || 'Failed to send verification email.' });
+        toast.error(error.message || 'Failed to send verification email.');
       }
     } finally {
       setLoading(false);
@@ -58,20 +57,19 @@ export default function VerifyEmailPage() {
   const handleCheckStatus = async () => {
     if (!user) return;
     setLoading(true);
-    setMessage({ type: '', text: '' });
 
     try {
       await user.reload(); // Force Firebase to refresh the user token/state
       if (user.emailVerified) {
-        setMessage({ type: 'success', text: 'Email verified successfully! Redirecting...' });
+        toast.success('Email verified successfully! Redirecting...');
         setTimeout(() => {
           router.push(profile?.role === 'organizer' ? '/dashboard/organizer' : '/dashboard/worker');
         }, 1500);
       } else {
-        setMessage({ type: 'error', text: 'Email is not verified yet. Please click the link in the email we sent.' });
+        toast.error('Email is not verified yet. Please click the link in the email we sent.');
       }
     } catch (error: any) {
-      setMessage({ type: 'error', text: error.message || 'Error checking verification status.' });
+      toast.error(error.message || 'Error checking verification status.');
     } finally {
       setLoading(false);
     }
@@ -104,17 +102,6 @@ export default function VerifyEmailPage() {
           <span className="font-semibold text-gray-900 dark:text-white">{user.email}</span><br/>
           Please check your inbox to activate your account.
         </p>
-
-        {message.text && (
-          <div className={`mb-6 p-4 rounded-xl text-sm flex items-start gap-3 text-left ${
-            message.type === 'success' 
-              ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-900/50'
-              : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/50'
-          }`}>
-            {message.type === 'success' ? <CheckCircle2 className="w-5 h-5 flex-shrink-0" /> : <AlertCircle className="w-5 h-5 flex-shrink-0" />}
-            <p>{message.text}</p>
-          </div>
-        )}
 
         <div className="space-y-4">
           <button

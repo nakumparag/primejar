@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
+import toast from 'react-hot-toast';
 import { logUserSignup } from '@/lib/activity';
 import { Mail, Lock, User, Phone, MapPin, Building2, Briefcase, IndianRupee, ArrowRight, ArrowLeft, Check, CheckCircle2 } from 'lucide-react';
 
@@ -30,7 +31,6 @@ export default function SignupPage() {
     skills: [] as string[], experience: '', bio: '',
     dailyRate: '', companyName: ''
   });
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -45,12 +45,11 @@ export default function SignupPage() {
 
   const handleSignup = async (e?: React.FormEvent) => {
     e?.preventDefault(); // ✅ Prevent page reload
-    setError('');
     setLoading(true);
 
-    if (!formData.email || !formData.password) { setError('Email and password are required.'); setLoading(false); return; }
-    if (formData.password.length < 6) { setError('Password must be at least 6 characters.'); setLoading(false); return; }
-    if (!formData.name || !formData.city) { setError('Name and city are required.'); setLoading(false); return; }
+    if (!formData.email || !formData.password) { toast.error('Email and password are required.'); setLoading(false); return; }
+    if (formData.password.length < 6) { toast.error('Password must be at least 6 characters.'); setLoading(false); return; }
+    if (!formData.name || !formData.city) { toast.error('Name and city are required.'); setLoading(false); return; }
 
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
@@ -96,12 +95,73 @@ export default function SignupPage() {
       
       // Brief wait before redirecting
       await new Promise(resolve => setTimeout(resolve, 500));
+      toast.success('Account created successfully!');
       router.push('/verify-email');
     } catch (err: any) {
-      if (err.code === 'auth/email-already-in-use') setError('This email is already registered. Please login instead.');
-      else if (err.code === 'auth/invalid-email') setError('Please enter a valid email address.');
-      else if (err.code === 'auth/weak-password') setError('Password must be at least 6 characters.');
-      else setError(err.message || 'Signup failed. Please try again.');
+      if (err.code === 'auth/email-already-in-use') toast.error('This email is already registered. Please login instead.');
+      else if (err.code === 'auth/invalid-email') toast.error('Please enter a valid email address.');
+      else if (err.code === 'auth/weak-password') toast.error('Password must be at least 6 characters.');
+      else toast.error(err.message || 'Signup failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignup = async () => {
+    if (!role) {
+      toast.error('Please choose your account type first (Professional or Organizer).');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      
+      const user = result.user;
+      const finalRole = user.email?.toLowerCase() === 'admin@primejar.in' ? 'admin' : role;
+
+      const userData: any = {
+        name: user.displayName || 'Google User',
+        email: user.email,
+        phone: user.phoneNumber || '',
+        city: '',
+        role: finalRole,
+        createdAt: serverTimestamp(),
+        lastLogin: serverTimestamp(),
+      };
+
+      if (finalRole === 'user' || finalRole === 'admin') {
+        userData.bio = '';
+        userData.skills = [];
+        userData.experience = '';
+        userData.dailyRate = 0;
+        userData.photoURL = user.photoURL || '';
+        userData.portfolioImages = [];
+        userData.availability = [];
+        userData.rating = 0;
+        userData.reviewCount = 0;
+        userData.verified = false;
+      }
+
+      if (finalRole === 'organizer') {
+        userData.companyName = '';
+      }
+
+      await setDoc(doc(db, 'users', user.uid), userData, { merge: true });
+
+      // Log activity
+      await logUserSignup(user.uid, userData.name, role);
+
+      toast.success('Successfully signed up with Google!');
+      if (finalRole === 'admin') router.push('/admin');
+      else if (finalRole === 'organizer') router.push('/dashboard/organizer');
+      else router.push('/dashboard/user');
+
+    } catch (err: any) {
+      if (err.code !== 'auth/popup-closed-by-user') {
+        toast.error(err.message || 'Google Sign-Up failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -200,15 +260,6 @@ export default function SignupPage() {
              </div>
           )}
 
-          {error && (
-            <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-sm flex items-start gap-3">
-              <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>{error}</span>
-            </div>
-          )}
-
           {/* STEP 1: ROLE */}
           {step === 1 && (
             <div className="space-y-6">
@@ -245,7 +296,7 @@ export default function SignupPage() {
               </div>
 
               <button 
-                onClick={() => { if (role) { setError(''); setStep(2); } }} 
+                onClick={() => { if (role) { setStep(2); } }} 
                 disabled={!role} 
                 className="w-full mt-4 py-3.5 px-4 bg-prime-600 hover:bg-prime-700 text-white font-medium rounded-xl transition-all shadow-lg shadow-prime-600/25 disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-2"
               >
@@ -259,7 +310,7 @@ export default function SignupPage() {
                  <div className="border-t border-gray-200 dark:border-gray-800 flex-1" />
               </div>
 
-              <button type="button" className="mt-6 w-full py-3.5 px-4 bg-white dark:bg-[#1a1512] border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-[#251e19] text-gray-700 dark:text-gray-300 font-medium rounded-xl transition-all flex items-center justify-center gap-3">
+              <button type="button" onClick={handleGoogleSignup} disabled={loading} className="mt-6 w-full py-3.5 px-4 bg-white dark:bg-[#1a1512] border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-[#251e19] text-gray-700 dark:text-gray-300 font-medium rounded-xl transition-all flex items-center justify-center gap-3">
                  <svg className="w-5 h-5" viewBox="0 0 24 24">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
@@ -346,14 +397,14 @@ export default function SignupPage() {
               </div>
 
               <button 
+                type="button"
                 onClick={() => {
-                  setError('');
                   if (!formData.name || !formData.email || !formData.password || formData.password.length < 6 || !formData.city) { 
-                    setError('Please fill in all required fields marked with * and ensure password is > 6 characters.'); 
+                    toast.error('Please fill in all required fields marked with * and ensure password is > 6 characters.'); 
                     return; 
                   }
                   setStep(3);
-                }} 
+                }}  
                 className="w-full py-3.5 px-4 bg-prime-600 hover:bg-prime-700 text-white font-medium rounded-xl transition-all shadow-lg shadow-prime-600/25 flex items-center justify-center gap-2 mt-4"
               >
                 Continue <ArrowRight className="w-4 h-4" />

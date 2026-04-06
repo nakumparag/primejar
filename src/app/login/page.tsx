@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { doc, getDoc, updateDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
@@ -20,7 +21,6 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe,   setRememberMe]   = useState(false);
   const [loading,      setLoading]      = useState(false);
-  const [error,        setError]        = useState('');
 
   // Load saved credentials on mount
   useEffect(() => {
@@ -36,10 +36,9 @@ export default function LoginPage() {
   // ── Main login handler ──────────────────────────────────────────────────────
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();           // ✅ prevent page reload
-    setError('');
 
     if (!email.trim() || !password.trim()) {
-      setError('Please enter both email and password.');
+      toast.error('Please enter both email and password.');
       return;
     }
 
@@ -62,9 +61,9 @@ export default function LoginPage() {
     } catch (err: any) {
       // If admin email/password is wrong in Firebase, show helpful message
       if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-login-credentials') {
-        setError('Admin account not found in Firebase. Please create the admin account first via Firebase Console → Authentication → Add User (admin@primejar.in / Parag@3873).');
+        toast.error('Admin account not found in Firebase. Please create the admin account first via Firebase Console → Authentication → Add User (admin@primejar.in / Parag@3873).');
       } else {
-        setError(err.message || 'Admin login failed.');
+        toast.error(err.message || 'Admin login failed.');
       }
       setLoading(false);
       return;
@@ -100,17 +99,17 @@ export default function LoginPage() {
     } catch (err: any) {
       const code = err.code || '';
       if (code === 'auth/user-not-found' || code === 'auth/invalid-credential' || code === 'auth/invalid-login-credentials') {
-        setError('Invalid email or password.');
+        toast.error('Invalid email or password.');
       } else if (code === 'auth/wrong-password') {
-        setError('Incorrect password. Please try again.');
+        toast.error('Incorrect password. Please try again.');
       } else if (code === 'auth/invalid-email') {
-        setError('Please enter a valid email address.');
+        toast.error('Please enter a valid email address.');
       } else if (code === 'auth/too-many-requests') {
-        setError('Too many failed attempts. Please try again later.');
+        toast.error('Too many failed attempts. Please try again later.');
       } else if (code === 'auth/user-disabled') {
-        setError('Your account has been suspended. Contact support.');
+        toast.error('Your account has been suspended. Contact support.');
       } else {
-        setError(err.message || 'Login failed. Please try again.');
+        toast.error(err.message || 'Login failed. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -119,7 +118,6 @@ export default function LoginPage() {
 
   // ── Google login ──────────────────────────────────────────────────────────
   const handleGoogleLogin = async () => {
-    setError('');
     setLoading(true);
     try {
       const provider = new GoogleAuthProvider();
@@ -155,7 +153,7 @@ export default function LoginPage() {
       else                      router.push('/dashboard/user');
     } catch (err: any) {
       if (err.code !== 'auth/popup-closed-by-user') {
-        setError(err.message || 'Google Sign-In failed. Please try again.');
+        toast.error(err.message || 'Google Sign-In failed. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -248,17 +246,6 @@ export default function LoginPage() {
             </h2>
             <p style={{ color: 'var(--text-muted)' }}>Enter your details to securely access your account.</p>
           </div>
-
-          {/* Error */}
-          {error && (
-            <div className="mb-6 p-4 rounded-2xl flex items-start gap-3 text-sm"
-              style={{ background: '#FEF2F2', border: '1px solid #FEE2E2', color: '#DC2626' }}>
-              <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>{error}</span>
-            </div>
-          )}
 
           {/* ── FORM ── */}
           <form onSubmit={handleLogin} className="space-y-5" noValidate>
@@ -375,7 +362,7 @@ export default function LoginPage() {
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
             </svg>
-            Sign in with Google
+            <span style={{ color: 'var(--text-primary)' }}>Sign in with Google</span>
           </button>
 
           <p className="mt-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>

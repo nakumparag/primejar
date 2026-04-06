@@ -2,90 +2,124 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ── Helper Functions ─────────────────────────────────────────
     function isAuth() {
       return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isAuth() && request.auth.uid == uid;
     }
 
     function isAdmin() {
       return isAuth() && request.auth.token.email == 'admin@primejar.in';
     }
 
-    // ── Global Admin Access ─────────────────────────────────────
-    // Ensures admin has full read/write capabilities across all collections
+    function isVerified() {
+      return isAuth() && request.auth.token.email_verified == true;
+    }
+
     match /{document=**} {
       allow read, write: if isAdmin();
     }
 
-    // ── Collections ─────────────────────────────────────────────
-
-    // Users Collection
     match /users/{userId} {
-      // Anyone authenticated can read user profiles (since organizers must see workers and vice versa).
-      allow read: if isAuth(); 
-      // Users can only create or update their own profile
-      allow create, update: if isAuth() && request.auth.uid == userId;
+      allow read: if true;
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isAdmin();
 
       match /reviews/{reviewId} {
-        allow read, write: if isAuth();
+        allow read: if true;
+        allow create: if isVerified() && request.auth.uid != userId;
+        allow update, delete: if isAdmin();
       }
     }
 
-    // Jobs Collection
     match /jobs/{jobId} {
-      // Authenticated users can see all available jobs
-      allow read: if isAuth();
+      allow read: if true;
       allow create: if isAuth();
-      // Only the organizer who created the job can edit it
-      allow update: if isAuth() && resource.data.organizerId == request.auth.uid;
+      allow update: if isAuth() && (resource.data.organizerId == request.auth.uid || resource.data.createdBy == request.auth.uid);
+      allow delete: if isAdmin() || (isAuth() && (resource.data.organizerId == request.auth.uid || resource.data.createdBy == request.auth.uid));
     }
 
-    // Applications Collection
-    match /applications/{appId} {
-      allow read: if isAuth();
-      // Workers must be applying for themselves
-      allow create: if isAuth() && request.resource.data.workerId == request.auth.uid;
-      // Either organizer or worker can update an application (e.g., status changes)
-      allow update: if isAuth() && (resource.data.organizerId == request.auth.uid || resource.data.workerId == request.auth.uid);
-    }
-
-    // Activity Collection (Platform Events)
-    match /activity/{docId} {
-      // IMPORTANT: Only admins can read activity (prevents data leaks to ordinary users)
-      allow read: if isAdmin();
-      // Any authenticated user can create an activity log via client
-      allow create: if isAuth();
-    }
-
-    // Notifications Collection
-    match /notifications/{notifId} {
-      allow read, write: if isAuth();
-    }
-
-    // Groups & Posts
-    match /groups/{groupId} {
-      allow read, write: if isAuth();
-      match /posts/{postId} {
-        allow read, write: if isAuth();
-      }
-    }
-
-    // Conversations & Messages
-    match /conversations/{convId} {
-      allow read, write: if isAuth();
-      match /messages/{msgId} {
-        allow read, write: if isAuth();
-      }
-    }
-
-    // Events
     match /events/{eventId} {
-      allow read, write: if isAuth();
+      allow read: if true;
+      allow create: if isAuth();
+      allow update: if isAuth() && (resource.data.organizerId == request.auth.uid || resource.data.createdBy == request.auth.uid);
+      allow delete: if isAdmin();
     }
 
-    // Default Fallback
-    // Ensure all other untested collections are locked by default
-    match /{default=**} {
+    match /applications/{appId} {
+      allow read: if isAuth() && (
+        resource.data.workerId == request.auth.uid ||
+        resource.data.organizerId == request.auth.uid
+      );
+      allow create: if isAuth() && request.resource.data.workerId == request.auth.uid;
+      allow update: if isAuth() && (
+        resource.data.organizerId == request.auth.uid ||
+        resource.data.workerId == request.auth.uid
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /notifications/{notifId} {
+      allow read: if isAuth();
+      allow create: if isAuth();
+      allow update: if isAuth() && resource.data.userId == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+
+    match /groups/{groupId} {
+      allow read: if isAuth();
+      allow create: if isAuth();
+      allow update: if isAuth() && (resource.data.createdBy == request.auth.uid);
+      allow delete: if isAdmin() || (isAuth() && resource.data.createdBy == request.auth.uid);
+
+      match /posts/{postId} {
+        allow read: if isAuth();
+        allow create: if isAuth();
+        allow update, delete: if isAuth() && resource.data.authorId == request.auth.uid;
+      }
+    }
+
+    match /conversations/{convId} {
+      allow read: if isAuth() && request.auth.uid in resource.data.participants;
+      allow create: if isAuth() && request.auth.uid in request.resource.data.participants;
+      allow update: if isAuth() && request.auth.uid in resource.data.participants;
+      allow delete: if isAdmin();
+
+      match /messages/{msgId} {
+        allow read: if isAuth() &&
+          request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participants &&
+          get(/databases/$(database)/documents/conversations/$(convId)).data.status == 'accepted';
+        allow create: if isAuth() &&
+          request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participants &&
+          get(/databases/$(database)/documents/conversations/$(convId)).data.status == 'accepted';
+        allow update, delete: if false;
+      }
+    }
+
+    match /workers/{uid} {
+      allow read: if true;
+      allow create: if isOwner(uid);
+      allow update: if isOwner(uid);
+      allow delete: if isAdmin();
+    }
+
+    match /organizers/{uid} {
+      allow read: if true;
+      allow create: if isOwner(uid);
+      allow update: if isOwner(uid);
+      allow delete: if isAdmin();
+    }
+
+    match /activity/{docId} {
+      allow read: if isAdmin();
+      allow create: if isAuth();
+      allow update, delete: if isAdmin();
+    }
+
+    match /{anything=**} {
       allow read, write: if false;
     }
   }

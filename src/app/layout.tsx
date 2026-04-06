@@ -5,11 +5,12 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import LoginGate from "@/components/LoginGate";
+import { Toaster } from 'react-hot-toast';
 
 export const metadata: Metadata = {
-  title: "PrimeJar – Event Manpower Marketplace",
-  description: "Connect with top event professionals. Find photographers, videographers, DJs, caterers, decorators, and more for your next event. No middlemen.",
-  keywords: "event professionals, event staffing, wedding photographer, event DJ, catering staff, event marketplace",
+  title: "PrimeJar – Discover Events, Vendors & Services",
+  description: "India's premier event discovery platform. Find photographers, DJs, decorators, caterers & 10,000+ verified professionals for your next event.",
+  keywords: "event professionals, event discovery, wedding photographer, event DJ, catering, event marketplace India",
 };
 
 export default function RootLayout({
@@ -49,7 +50,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Inter:wght@300;400;500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap"
           rel="stylesheet"
         />
       </head>
@@ -60,6 +61,7 @@ export default function RootLayout({
             <LoginGate />
             <main className="flex-1">{children}</main>
             <Footer />
+            <Toaster position="top-right" />
           </AuthProvider>
         </ThemeProvider>
       </body>

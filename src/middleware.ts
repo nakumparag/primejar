@@ -3,10 +3,8 @@ import type { NextRequest } from 'next/server';
 
 // Routes that require authentication
 const PROTECTED_PREFIXES = [
-  '/users',
-  '/jobs',
-  '/groups',
   // '/admin', // Temporarily disabled admin auth guard
+  '/groups',
   '/dashboard',
   '/messages',
   '/notifications',

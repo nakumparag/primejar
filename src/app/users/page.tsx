@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { Star, MapPin, ShieldCheck, Briefcase, User, Search, Heart, Eye, SlidersHorizontal } from 'lucide-react';
+import { Star, MapPin, ShieldCheck, Briefcase, User, Search, Heart, Eye, SlidersHorizontal, Lock } from 'lucide-react';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useAuth } from '@/contexts/AuthContext';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 
@@ -39,6 +40,7 @@ export default function WorkersPage() {
 }
 
 function WorkersContent() {
+  const { user, loading: authLoading } = useAuth();
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get('q') || '';
 
@@ -79,6 +81,9 @@ function WorkersContent() {
   } else if (sortBy === 'reviews') {
     filtered = [...filtered].sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0));
   }
+
+  const isLocked = !authLoading && !user;
+  const displayWorkers = isLocked ? filtered.slice(0, 3) : filtered;
 
   const toggleLike = (id: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -171,7 +176,7 @@ function WorkersContent() {
         </div>
 
         {/* Results */}
-        {loading ? (
+        {loading || authLoading ? (
           /* Dribbble-style skeleton shimmer grid */
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1,2,3,4,5,6].map(i => (
@@ -210,10 +215,11 @@ function WorkersContent() {
           </div>
         ) : (
           /* Dribbble-style image-first masonry grid */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
-            {filtered.map((worker) => {
-              const initials = worker.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || 'W';
-              const isOrganizer = worker.role === 'organizer';
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
+              {displayWorkers.map((worker) => {
+                const initials = worker.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || 'W';
+                const isOrganizer = worker.role === 'organizer';
               const primarySkill = isOrganizer
                 ? (worker.companyName || 'Event Organizer')
                 : (worker.skills?.[0] || 'Event Professional');
@@ -325,6 +331,32 @@ function WorkersContent() {
                 </Link>
               );
             })}
+            </div>
+
+            {isLocked && filtered.length > 3 && (
+              <div className="mt-8 glass-card p-10 text-center relative overflow-hidden">
+                <div className="absolute inset-0 opacity-10 bg-gradient-to-br from-orange-500 to-amber-500 pointer-events-none" />
+                <div className="relative z-10 max-w-md mx-auto">
+                  <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'var(--orange-pale)', color: 'var(--orange)' }}>
+                    <Lock className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-2xl font-display font-bold mb-3" style={{ color: 'var(--text-primary)' }}>
+                    Unlock {filtered.length - 3} more professionals!
+                  </h3>
+                  <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>
+                    Create a free account or log in to view the full directory, contact vendors directly, and read client reviews.
+                  </p>
+                  <div className="flex flex-col sm:flex-row justify-center gap-3">
+                    <Link href="/login?redirect=/users" className="px-6 py-2.5 rounded-xl text-white font-medium hover:opacity-90 transition-all text-sm shadow-lg" style={{ background: 'var(--orange)' }}>
+                      Log In
+                    </Link>
+                    <Link href="/signup?redirect=/users" className="px-6 py-2.5 rounded-xl font-medium text-sm transition-all" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', color: 'var(--text-primary)' }}>
+                      Create Account
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
